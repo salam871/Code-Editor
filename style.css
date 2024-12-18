@@ -23,6 +23,28 @@ body {
   padding: 1rem;
 }
 
+.framework-selection {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+}
+
+.framework-selection button {
+  height: 35px;
+  width: 250px;
+  display: flex;
+  font-size: 18px;
+  justify-content: center;
+  align-items: center;
+  margin: 5px;
+}
+
+.framework-selection button svg {
+  margin-right: 10px;
+}
+
 .editor {
   text-align: start;
   display: flex;
@@ -57,10 +79,27 @@ label svg {
   padding: 10px 20px;
 }
 
+.react-input {
+  display: none;
+}
+
+#react-area {
+  width: 100%;
+  height: 100vh;
+  border: 0;
+  outline: 0;
+  font-size: 18px;
+  padding: 10px 20px;
+}
+
 iframe {
   width: 100%;
   height: 95%;
   background-color: white;
   border: 0;
   outline: 0;
+}
+
+#react-output {
+  display: none;
 }
