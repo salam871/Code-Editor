@@ -1,11 +1,9 @@
 // Functions for changing the framework as needed
 function reactFramework() {
   document.getElementById("html-input").style.display = "none";
-  document.getElementById("css-input").style.display = "none";
+  document.getElementById("css-input").style.height = "50vh";
   document.getElementById("js-input").style.display = "none";
   document.getElementById("react-input").style.display = "inline";
-  document.getElementById("react-output").style.display = "inline";
-  document.getElementById("output").style.display = "none";
 }
 
 function standardFramework() {
@@ -13,8 +11,6 @@ function standardFramework() {
   document.getElementById("css-input").style.display = "inline";
   document.getElementById("js-input").style.display = "inline";
   document.getElementById("react-input").style.display = "none";
-  document.getElementById("react-output").style.display = "none";
-  document.getElementById("output").style.display = "inline";
 }
 
 // Monaco loader configuration
@@ -73,7 +69,20 @@ require(["vs/editor/editor.main"], function () {
   var reactEditor = monaco.editor.create(
     document.getElementById("react-area"),
     {
-      value: `const App = () => <h1>Hello, React!</h1>;`,
+      value: `
+          const { useState } = React;
+          function App() {
+            const [count, setCount] = useState(0);
+
+            return (
+              <div>
+                <h1>Counter: {count}</h1>
+                <button onClick={() => setCount(count + 1)}>Increment</button>
+              </div>
+            );
+          }
+
+          ReactDOM.render(<App />, document.getElementById('root'));`,
       language: "javascript",
       theme: "vs-dark",
       automaticLayout: true,
@@ -101,46 +110,65 @@ require(["vs/editor/editor.main"], function () {
   }
 
   // Function to handle React JSX transformation and rendering
+
   function updateReactPreview() {
     var reactCode = reactEditor.getValue();
+    var cssContent = "<style>" + cssEditor.getValue() + "</style>";
 
-    // Wrap React code in a simple React app container
-    var reactAppCode = `
-      <!DOCTYPE html>
-      <html>
+    try {
+      // Transform the React code
+      const transformedCode = Babel.transform(
+        `
+        (function() {
+          ${reactCode}
+          ReactDOM.render(App(), document.getElementById('root'));
+        })();
+        `,
+        { presets: ["react"] }
+      ).code;
+
+      // Wrap the code in an HTML container
+      var reactAppCode = `
+        <!DOCTYPE html>
+        <html lang="en">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>React Preview</title>
-          <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
-          <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-          <script src="https://unpkg.com/@babel/standalone@7.22.9/babel.min.js"></script>
+          <title>Preview</title>
+          <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+          <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+          ${cssContent}
         </head>
         <body>
           <div id="root"></div>
-          <script type="text/babel">
-            ${reactCode}
-            ReactDOM.render(<App />, document.getElementById('root'));
+          <script>
+            ${transformedCode}
           </script>
         </body>
-      </html>
-    `;
+        </html>
+      `;
 
-    // Get the iframe document and write the React content
-    var iframe = document.getElementById("react-output");
-    var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    iframeDoc.open();
-    iframeDoc.write(reactAppCode);
-    iframeDoc.close();
+      // Get the iframe document and write the React content
+      var iframe = document.getElementById("output");
+      var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+      iframeDoc.open(); // Reset the iframe content
+      iframeDoc.write(reactAppCode);
+      iframeDoc.close();
+    } catch (error) {
+      console.error("Error updating React preview:", error);
+      alert("An error occurred. Check the console for details.");
+    }
   }
 
   // Update preview on editor content change
   htmlEditor.onDidChangeModelContent(updatePreview);
   cssEditor.onDidChangeModelContent(updatePreview);
   jsEditor.onDidChangeModelContent(updatePreview);
-  reactEditor.onDidChangeModelContent(updateReactPreview);
 
   // Initial preview update
   updatePreview();
-  updateReactPreview();
+  document
+    .getElementById("run-react")
+    .addEventListener("click", updateReactPreview);
 });
